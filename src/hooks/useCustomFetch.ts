@@ -28,26 +28,6 @@ export function useCustomFetch() {
     [cache, wrappedRequest]
   )
 
-  const fetchWithoutCache = useCallback(
-    async <TData, TParams extends object = object>(
-      endpoint: RegisteredEndpoints,
-      params?: TParams
-    ): Promise<TData | null> =>
-      wrappedRequest<TData>(async () => {
-        const result = await fakeFetch<TData>(endpoint, params)
-        return result
-      }),
-    [wrappedRequest]
-  )
-
-  const clearCache = useCallback(() => {
-    if (cache?.current === undefined) {
-      return
-    }
-
-    cache.current = new Map<string, string>()
-  }, [cache])
-
   const clearCacheByEndpoint = useCallback(
     (endpointsToClear: RegisteredEndpoints[]) => {
       if (cache?.current === undefined) {
@@ -66,6 +46,30 @@ export function useCustomFetch() {
     },
     [cache]
   )
+  
+  const fetchWithoutCache = useCallback(
+    async <TData, TParams extends object = object>(
+      endpoint: RegisteredEndpoints,
+      params?: TParams
+    ): Promise<TData | null> =>
+      wrappedRequest<TData>(async () => {
+        const result = await fakeFetch<TData>(endpoint, params)
+        if(endpoint === 'setTransactionApproval'){
+          clearCacheByEndpoint(['transactionsByEmployee','paginatedTransactions'])
+        }
+        return result
+      }),
+    [clearCacheByEndpoint, wrappedRequest]
+  )
+
+  const clearCache = useCallback(() => {
+    if (cache?.current === undefined) {
+      return
+    }
+
+    cache.current = new Map<string, string>()
+  }, [cache])
+
 
   return { fetchWithCache, fetchWithoutCache, clearCache, clearCacheByEndpoint, loading }
 }
